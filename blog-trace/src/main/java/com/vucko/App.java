@@ -1,9 +1,6 @@
 package com.vucko;
 
 import com.alibaba.fastjson.JSON;
-import com.vucko.kafka.KafkaConsumer;
-import com.vucko.kafka.KafkaProducer;
-import com.vucko.kafka.KafkaProperties;
 import com.vucko.parser.Node;
 import com.vucko.parser.NodeParser;
 
@@ -11,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Hello world!
