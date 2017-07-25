@@ -23,6 +23,7 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="blog-consumer" />
+        <module name="blog-hadoop" />
         <module name="blog-provider" />
         <module name="blog-trace" />
         <module name="blog-web" />
@@ -31,6 +32,7 @@
     <bytecodeTargetLevel>
       <module name="blog-consumer" target="1.5" />
       <module name="blog-dubbo" target="1.5" />
+      <module name="blog-hadoop" target="1.5" />
       <module name="blog-provider" target="1.5" />
       <module name="blog-trace" target="1.8" />
       <module name="blog-web" target="1.5" />
