@@ -2,6 +2,7 @@ package com.vucko.kafka;
 
 import com.alibaba.fastjson.JSONObject;
 import com.vucko.parser.Span;
+import kafka.common.QueueFullException;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
 import kafka.producer.async.AsyncProducerConfig;
@@ -23,14 +24,15 @@ public class KafkaProducer implements Runnable {
         props.put("serializer.class", "kafka.serializer.StringEncoder");
         props.put("metadata.broker.list", "127.0.0.1:9092,127.0.0.1:9093,127.0.0.1:9094");
         props.put("producer.type", "async");
+//        props.put("batch.num.messages", 100);//异步模式单批次提交到broker的消息数量
+//        props.put("queue.buffering.max.ms", 5000);//缓存批量数据的等待时间，对达不到单批次缓存数量的保证
+//        props.put("queue.buffering.max.message", 1000);//异步模式缓存数据的最大数量
+//        props.put("queue.enqueue.timeout.ms", 0);//异步模式缓存数据队列达到最大值时的处理：0当queue满时丢掉，负值是queue满时block,正值是queue满时block相应的时间
         ProducerConfig config = new ProducerConfig(props);
-        config.kafka$producer$SyncProducerConfigShared$_setter_$requestRequiredAcks_$eq((short) 0);
-        // 在异步模式下，一个batch发送的消息数量。producer会等待直到要发送的消息数量达到这个值，之后才会发送。
-        // 但如果消息数量不够，达到queue.buffer.max.ms时也会直接发送。
         config.kafka$producer$async$AsyncProducerConfig$_setter_$batchNumMessages_$eq(100);
-        // 默认值：200，当使用异步模式时，缓冲数据的最大时间。例如设为100的话，会每隔100毫秒把所有的消息批量发送。
-        // 这会提高吞吐量，但是会增加消息的到达延时
         config.kafka$producer$async$AsyncProducerConfig$_setter_$queueBufferingMaxMs_$eq(5000);
+        config.kafka$producer$async$AsyncProducerConfig$_setter_$queueBufferingMaxMessages_$eq(1000);
+        config.kafka$producer$async$AsyncProducerConfig$_setter_$queueEnqueueTimeoutMs_$eq(0);
         producer = new kafka.javaapi.producer.Producer<Integer, String>(config);
         this.topic = topic;
     }
@@ -38,7 +40,29 @@ public class KafkaProducer implements Runnable {
     public void run() {
         int messageNo = 0;
 
-        while (true) {
+        while (messageNo <5000) {
+            String spanId = UUID.randomUUID().toString();
+            Span span = new Span();
+            span.setSpanId(spanId);
+            span.setServiceName("服务调用 ");
+            String messageStr = JSONObject.toJSONString(span);
+            System.out.println("messageNo:" + messageNo + ": " + messageStr);
+            try {
+                producer.send(new KeyedMessage<Integer, String>(topic, messageStr));
+            }catch (QueueFullException e){
+                System.out.println("queue full, throwing new data...");
+            }
+
+            messageNo++;
+        }
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        messageNo = 0;
+        while (messageNo <100) {
             String spanId = UUID.randomUUID().toString();
             Span span = new Span();
             span.setSpanId(spanId);
@@ -46,12 +70,6 @@ public class KafkaProducer implements Runnable {
             String messageStr = JSONObject.toJSONString(span);
             System.out.println("messageNo:" + messageNo + ": " + messageStr);
             producer.send(new KeyedMessage<Integer, String>(topic, messageStr));
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
             messageNo++;
         }
