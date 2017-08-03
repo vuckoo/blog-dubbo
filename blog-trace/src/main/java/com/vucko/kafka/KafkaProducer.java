@@ -40,8 +40,8 @@ public class KafkaProducer implements Runnable {
     public void run() {
         int messageNo = 0;
 
-        while (messageNo <5000) {
-            String spanId = UUID.randomUUID().toString();
+        String spanId = UUID.randomUUID().toString();
+        while (messageNo <10) {
             Span span = new Span();
             span.setSpanId(spanId);
             span.setServiceName("服务调用 ");
@@ -53,26 +53,15 @@ public class KafkaProducer implements Runnable {
                 System.out.println("queue full, throwing new data...");
             }
 
-            messageNo++;
-        }
-
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        messageNo = 0;
-        while (messageNo <100) {
-            String spanId = UUID.randomUUID().toString();
-            Span span = new Span();
-            span.setSpanId(spanId);
-            span.setServiceName("服务调用 ");
-            String messageStr = JSONObject.toJSONString(span);
-            System.out.println("messageNo:" + messageNo + ": " + messageStr);
-            producer.send(new KeyedMessage<Integer, String>(topic, messageStr));
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             messageNo++;
         }
+
     }
 
     public static void main(String[] args) {
